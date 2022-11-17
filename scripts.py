@@ -2,7 +2,7 @@ import random
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from datacenter.models import Schoolkid, Mark, Chastisement, Lesson, Commendation
 
-commendation = ['Молодец!',
+COMMENDATION = ['Молодец!',
                 'Отлично!',
                 'Хорошо!',
                 'Гораздо лучше, чем я ожидал!',
@@ -35,36 +35,35 @@ commendation = ['Молодец!',
                 ]
 
 
-def get_child(schoolkid):
+def get_child(schoolkid_name):
     try:
-        return Schoolkid.objects.get(full_name__contains=schoolkid)
-    except ObjectDoesNotExist:
-        print('Нет такого ученика')
-    except MultipleObjectsReturned:
-        print('Найдено несколько учеников')
+        return Schoolkid.objects.get(full_name__contains=schoolkid_name)
+    except Schoolkid.DoesNotExist:
+        print('Нет такого ученика.')
+        raise
+    except Schoolkid.MultipleObjectsReturned:
+        print('Найдено несколько учеников.')
+        raise
 
 
-def fix_marks(schoolkid):
-    child = get_child(schoolkid)
-    bad_marks = Mark.objects.filter(schoolkid=child.id, points__lte=3)
-    for bad_mark in bad_marks:
-        bad_mark.points = 5
-        bad_mark.save()
+def fix_marks(schoolkid_name):
+    child = get_child(schoolkid_name)
+    Mark.objects.filter(schoolkid=child.id, points__lte=3).update(points=5)
 
 
-def remove_chastisements(schoolkid):
-    child = get_child(schoolkid)
+def remove_chastisements(schoolkid_name):
+    child = get_child(schoolkid_name)
     child_chastisements = Chastisement.objects.filter(schoolkid=child.id)
     child_chastisements.delete()
 
 
-def create_commendation(schoolkid, subject):
-    random_commendation = random.choice(commendation)
-    kid = get_child(schoolkid)
+def create_commendation(schoolkid_name, subject):
+    random_commendation = random.choice(COMMENDATION)
+    kid = get_child(schoolkid_name)
     lessons = Lesson.objects.filter(subject__title=subject, year_of_study=kid.year_of_study,
                                     group_letter=kid.group_letter).order_by('-date')
     if not lessons:
-        print(f'Не можем найти такой предмет: {subject}')
+        print('Таких уроков по предмету не найдено.')
         return
     random_lesson = random.choice(lessons)
     Commendation.objects.create(text=random_commendation, created=random_lesson.date, schoolkid=kid,

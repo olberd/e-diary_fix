@@ -9,7 +9,7 @@ python manage.py shell
 ```
 Для подключения скрипта нужно выполнить команду: 
 ```
-from scripts import create commendation, fix_marks, remove_chastisements
+from scripts import create_commendation, fix_marks, remove_chastisements
 ```
 ## Описание работы методов
 
